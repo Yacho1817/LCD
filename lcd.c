@@ -1,6 +1,7 @@
 #include "mbed.h"
 #include "Serial.h"
 #include "MKL25Z4.h"
+#include "Delay.h"
 int RS;
 int RW;
 int DB7;
@@ -60,20 +61,7 @@ void clearDisplay(){
     PTE -> PSOR |= (1<<DB0);
 }
 
-void returnHome(){
-    PTE -> PCOR |= (1<<RS);
-    PTE -> PCOR |= (1<<RW);
-    PTE -> PCOR |= (1<<DB7);
-    PTE -> PCOR |= (1<<DB6);
-    PTE -> PCOR |= (1<<DB5);
-    PTE -> PCOR |= (1<<DB4);
-    PTE -> PCOR |= (1<<DB3);
-    PTE -> PCOR |= (1<<DB2);
-    PTE -> PSOR |= (1<<DB1);
-    PTE -> PCOR |= (1<<DB0);
-}
-
-void returnHome(){
+void CursorHome(){
     PTE -> PCOR |= (1<<RS);
     PTE -> PCOR |= (1<<RW);
     PTE -> PCOR |= (1<<DB7);
@@ -101,11 +89,14 @@ void entryModeSet(int direction, int shift){
     } else if(direction == left) {
         PTE -> PCOR |= (1<<DB1);
     }
-    PTE -> PSOR |= (estadoDB1<<DB1);
-    PTE -> PSOR |= (estadoDB0<<DB0);
+    if(shift == 1){
+        PTE->PSOR |= (1<<DB0);
+    } else if(shift == 0){
+        PTE->PCOR |= (1<<DB0);
+    }
 }
 
-void displayControl(){
+void lcdInitialize(){
     PTE -> PCOR |= (1<<RS);
     PTE -> PCOR |= (1<<RW);
     PTE -> PCOR |= (1<<DB7);
@@ -113,60 +104,56 @@ void displayControl(){
     PTE -> PCOR |= (1<<DB5);
     PTE -> PCOR |= (1<<DB4);
     PTE -> PSOR |= (1<<DB3);
-    PTE -> PSOR |= (estadoDB2<<DB2);
-    PTE -> PSOR |= (estadoDB1<<DB1);
-    PTE -> PSOR |= (estadoDB0<<DB0);
+    PTE -> PSOR |= (1<<DB2);
+    PTE -> PSOR |= (1<<DB1);
+    PTE -> PSOR |= (1<<DB0);
 }
 
-void displayShift(){
+void DOCShift(int display, int cursor){ //Display or Cursor shift
     PTE -> PCOR |= (1<<RS);
     PTE -> PCOR |= (1<<RW);
     PTE -> PCOR |= (1<<DB7);
     PTE -> PCOR |= (1<<DB6);
     PTE -> PCOR |= (1<<DB5);
     PTE -> PSOR |= (1<<DB4);
-    PTE -> PSOR |= (estadoDB3<<DB3);
-    PTE -> PSOR |= (estadoDB2<<DB2);
+    if(display == 0 && cursor == 0){
+        PTE -> PCOR |= (1<<DB3);
+        PTE -> PCOR |= (1<<DB2);
+    } else if (display == 0 && cursor == 1){
+        PTE -> PCOR |= (1<<DB3);
+        PTE -> PSOR |= (1<<DB2);
+    } else if (display == 1 && cursor == 0){
+        PTE -> PSOR |= (1<<DB3);
+        PTE -> PCOR |= (1<<DB2);
+    } else if (display == 1 && cursor == 1){
+        PTE -> PSOR |= (1<<DB3);
+        PTE -> PSOR |= (1<<DB2);
+    }
     PTE -> PCOR |= (1<<DB1);
     PTE -> PCOR |= (1<<DB0);
 }
 
-void functionSet(){
-    PTE -> PCOR |= (1<<RS);
-    PTE -> PCOR |= (1<<RW);
-    PTE -> PCOR |= (1<<DB7);
-    PTE -> PCOR |= (1<<DB6);
-    PTE -> PSOR |= (1<<DB5);
-    PTE -> PSOR |= (estadoDB4<<DB4);
-    PTE -> PSOR |= (estadoDB3<<DB3);
-    PTE -> PSOR |= (estadoDB2<<DB2);
-    PTE -> PCOR |= (1<<DB1);
-    PTE -> PCOR |= (1<<DB0);
+int SetCursor(int c, int f){
+    CursorHome();
+    if(f == 0){         // fila 0: 0x00
+        return 0;
+    } else if (f == 1){
+        for(i=0; i<64; i++){        // fila 1: 0x40
+        entryModeSet(right, 0);
+        }
+    } else if(f == 2){
+        for(int i=0; i<20; i++){        // fila 2: 0x14
+        entryModeSet(right, 0);
+        //delay 50ms
+        }
+    } else if(f == 3){
+        for(int i=0; i<84; i++){        // fila 3: 0x84
+        entryModeSet(right, 0);
+        }
+    }
+    for(int i=0; i<c; i++){
+        entryModeSet(right, 0);
+        //delay 50ms
+    }
+    return 0;
 }
-
-void displayShift(){
-    PTE -> PCOR |= (1<<RS);
-    PTE -> PCOR |= (1<<RW);
-    PTE -> PCOR |= (1<<DB7);
-    PTE -> PCOR |= (1<<DB6);
-    PTE -> PCOR |= (1<<DB5);
-    PTE -> PSOR |= (1<<DB4);
-    PTE -> PSOR |= (estadoDB3<<DB3);
-    PTE -> PSOR |= (estadoDB2<<DB2);
-    PTE -> PCOR |= (1<<DB1);
-    PTE -> PCOR |= (1<<DB0);
-}
-
-void displayShift(){
-    PTE -> PCOR |= (1<<RS);
-    PTE -> PCOR |= (1<<RW);
-    PTE -> PCOR |= (1<<DB7);
-    PTE -> PCOR |= (1<<DB6);
-    PTE -> PCOR |= (1<<DB5);
-    PTE -> PSOR |= (1<<DB4);
-    PTE -> PSOR |= (estadoDB3<<DB3);
-    PTE -> PSOR |= (estadoDB2<<DB2);
-    PTE -> PCOR |= (1<<DB1);
-    PTE -> PCOR |= (1<<DB0);
-}
-
